@@ -32,3 +32,24 @@ GLB preparation notes:
 - Keep the back surface flat and close to Z=0 when possible.
 - Apply transforms before export: Ctrl+A > All Transforms.
 - Export as GLB named `quadro.glb`.
+
+
+## V2 change
+
+This version forces wall AR to use WebXR only:
+
+```html
+ar-modes="webxr"
+ar-placement="wall"
+```
+
+Why:
+- Scene Viewer may fall back to horizontal surface placement.
+- If the object appears on a table/floor, the experience is probably not using WebXR wall placement.
+- WebXR-only is stricter: if wall placement is unsupported on the device/browser, AR may not start, but it avoids the wrong table/floor placement.
+
+Testing tips:
+- Use Android Chrome.
+- Use HTTPS.
+- Test on a wall with texture/contrast, not a blank glossy wall.
+- Move the phone slowly to let WebXR detect the vertical plane.

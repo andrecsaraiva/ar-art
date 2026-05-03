@@ -1,4 +1,4 @@
-console.log('MAIN JS CARREGADO - WALL ART AR V1');
+console.log('MAIN JS CARREGADO - WALL ART AR V2 WEBXR WALL ONLY');
 
 const MODEL_FILE_PATH = './assets/models/quadro.glb';
 const USE_LOCAL_HDR = true;
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
           src="${MODEL_FILE_PATH}"
           alt="3D wall art preview"
           ar
-          ar-modes="webxr scene-viewer"
+          ar-modes="webxr"
           ar-placement="wall"
           ar-scale="fixed"
           xr-environment
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (eyebrow) eyebrow.textContent = 'Wall AR';
     if (title) title.textContent = 'Scan to view this piece on your wall';
     if (copy) {
-      copy.textContent = 'Use this QR code to open the wall AR experience on your phone. Point the camera at a vertical wall and tap the AR button to place the frame/poster.';
+      copy.textContent = 'Use this QR code to open the wall-only WebXR experience on your phone. Point the camera at a vertical wall and use the AR button. This version intentionally avoids Scene Viewer because Scene Viewer may place the object on tables or floors.';
     }
 
     if (openArLink) {

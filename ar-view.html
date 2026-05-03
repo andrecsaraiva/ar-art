@@ -196,19 +196,19 @@
   <div class="page">
     <div class="topbar">
       <div class="title">Wall AR Preview</div>
-      <div class="subtitle">Preview the artwork, then place it on a vertical wall with Android WebXR.</div>
+      <div class="subtitle">Preview the artwork, then place it on a vertical wall with WebXR wall placement only.</div>
     </div>
 
     <div class="shell">
       <div class="viewer-card">
         <div class="hero-copy">
           <h1>Place the artwork on your wall</h1>
-          <p>Point the camera at a clear vertical wall. The AR mode is configured for wall placement instead of floor/table placement.</p>
+          <p>Point the camera at a clear vertical wall. This version uses WebXR wall placement only and avoids Scene Viewer so it does not fall back to table/floor placement.</p>
         </div>
 
         <div class="cta-wrap">
           <button class="ar-button" id="external-ar-btn" type="button">Open Wall AR</button>
-          <div class="small-note">Requires Android Chrome, HTTPS, and AR support. If AR does not start, use the button inside the viewer.</div>
+          <div class="small-note">Requires Android Chrome, HTTPS, ARCore/WebXR support, and a well-lit textured wall. If AR does not start, this device/browser may not support WebXR wall placement.</div>
         </div>
 
         <div class="viewer-shell">
@@ -217,7 +217,7 @@
             src="./assets/models/quadro.glb"
             alt="Wall art preview model"
             ar
-            ar-modes="webxr scene-viewer"
+            ar-modes="webxr"
             ar-placement="wall"
             ar-scale="fixed"
             xr-environment
@@ -270,7 +270,7 @@
       </div>
 
       <div class="note">
-        <strong>Important:</strong> this version uses free <code>&lt;model-viewer&gt;</code> WebXR wall placement. It is best for Android Chrome. iOS wall AR usually needs a separate USDZ/Quick Look path.
+        <strong>Important:</strong> this version uses free <code>&lt;model-viewer&gt;</code> WebXR wall placement only. If your device cannot run WebXR wall placement, it will not fall back to table/floor AR.
       </div>
     </div>
   </div>
