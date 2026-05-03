@@ -1,56 +1,41 @@
-# Wall Art AR V3 - Custom WebXR
+# Wall Art AR V6 - Clean Model-Viewer Wall
 
 Modified files:
 - index.html
 - ar-view.html
 - js/main.js
 
-Expected asset structure:
+This version reverts from the custom Three.js/WebXR attempt back to the cleaner free model-viewer approach.
+
+Key settings:
+```html
+ar-modes="webxr"
+ar-placement="wall"
+ar-scale="fixed"
+xr-environment
+```
+
+What changed:
+- Removed custom Three.js AR/debug page.
+- Removed visible debug logs.
+- Kept WebXR-only wall placement to avoid Scene Viewer table/floor fallback.
+- Added clearer UX: user should point at the wall first, scan nearby references, then tap View on Wall.
+- Added lightweight AR status messaging.
+
+Limitations:
+- It cannot force a blank white wall to be trackable.
+- It cannot continuously recalculate placement after the browser has placed the object.
+- It relies on WebXR/ARCore plane detection.
+- For blank white walls, the practical workaround is scanning nearby contrast: corners, shadows, outlets, frames, furniture, baseboards, floor/wall edge.
+
+Expected assets:
 - assets/models/quadro.glb
 - assets/hdr/glasshouse_interior_4k_blur_exp_sat.hdr
 
-What changed from V2:
-- AR camera is now custom Three.js + WebXR instead of model-viewer AR.
-- The artwork is NOT created automatically.
-- The user must tap Place on Wall when WebXR finds a wall/surface.
-- Added Manual Place for blank white walls.
-- Added Move, Reset, Size controls and Exit AR.
-
-Why:
-- model-viewer AR may place the object on the first detected surface.
-- Custom WebXR gives us control over when the model is placed.
-- Blank white walls often have no feature points, so hit testing can fail.
-- Manual Place creates a usable fallback for plain walls.
-
 GLB prep:
-- File name: quadro.glb
-- Folder: assets/models/quadro.glb
-- Use real scale in meters.
-- Pivot/origin at center of the frame/poster.
-- Front of the artwork should face +Z.
-- Back should face -Z.
-- Apply transforms before export.
-
-
-## V4 debug fix
-
-This version changes the AR page imports from unpkg example modules to esm.sh modules and adds a visible debug log.
-
-Why:
-- if the module import failed, the Start Wall AR button would look broken because the click handler was never attached.
-- this page now prints boot, model loading, HDR loading, WebXR support, and AR start errors directly on the page.
-
-
-## V5 reference-space fallback
-
-The V4 log showed:
-
-`This device does not support the requested reference space type.`
-
-V5 now tries these reference spaces in order:
-
-1. `local`
-2. `local-floor`
-3. `unbounded`
-
-It also safely cleans up the AR session if the session is granted but fails before Three.js attaches to it.
+- Real-world scale in meters.
+- File name: quadro.glb.
+- Back of artwork should face the wall.
+- Front should face the camera.
+- Origin/pivot centered on the artwork/frame.
+- Apply transforms before exporting.

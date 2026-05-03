@@ -2,9 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Custom Wall AR</title>
-  <meta name="description" content="Custom WebXR wall placement for framed art and posters." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wall AR Preview</title>
+  <meta name="description" content="Wall AR preview for framed art, posters and flat wall objects." />
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.174.0/build/three.module.js"
+      }
+    }
+  </script>
+
+  <script type="module" src="https://unpkg.com/@google/model-viewer@4.1.0/dist/model-viewer-module.min.js"></script>
+  <script type="module" src="https://unpkg.com/@google/model-viewer-effects@1.5.0/dist/model-viewer-effects.min.js"></script>
 
   <style>
     :root {
@@ -15,7 +26,6 @@
       --accent: #dce6a0;
       --accent-strong: #cddc7b;
       --border: #dfdfd8;
-      --danger: #3c241e;
     }
 
     * { box-sizing: border-box; }
@@ -26,10 +36,7 @@
       background: var(--bg);
       color: var(--text);
       font-family: Arial, Helvetica, sans-serif;
-      overscroll-behavior: none;
     }
-
-    button { font: inherit; }
 
     .page {
       min-height: 100vh;
@@ -67,7 +74,7 @@
       flex: 1;
     }
 
-    .card {
+    .viewer-card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 20px;
@@ -76,13 +83,13 @@
     }
 
     .hero-copy {
-      padding: 20px;
+      padding: 18px 18px 0 18px;
     }
 
     .hero-copy h1 {
       margin: 0 0 8px 0;
-      font-size: 24px;
-      line-height: 1.15;
+      font-size: 22px;
+      line-height: 1.2;
     }
 
     .hero-copy p {
@@ -92,58 +99,68 @@
       font-size: 14px;
     }
 
-    .preview {
-      min-height: 52vh;
-      position: relative;
-      background:
-        radial-gradient(circle at 50% 28%, rgba(255,255,255,0.98) 0%, rgba(248,248,244,0.96) 35%, rgba(241,241,236,1) 100%);
-      display: grid;
-      place-items: center;
-      padding: 20px;
-    }
-
-    .preview-inner {
-      width: min(100%, 560px);
-      text-align: center;
-    }
-
-    .start-btn {
-      appearance: none;
-      border: 0;
-      width: 100%;
-      min-height: 58px;
-      border-radius: 999px;
-      background: var(--accent);
-      color: #111;
-      font-size: 17px;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(205,220,123,0.35);
-    }
-
-    .start-btn:active { background: var(--accent-strong); }
-
-    .status {
+    .steps {
       margin-top: 14px;
+      display: grid;
+      gap: 8px;
       color: var(--muted);
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.45;
     }
 
-    .log {
-      margin-top: 14px;
-      max-height: 220px;
-      overflow: auto;
-      text-align: left;
-      padding: 12px;
+    .steps div {
+      background: #f8f8f4;
+      border: 1px solid var(--border);
       border-radius: 12px;
-      background: #141414;
-      color: #d8ead2;
-      font-size: 12px;
-      line-height: 1.45;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-family: Consolas, Monaco, monospace;
+      padding: 10px 12px;
+    }
+
+    .viewer-shell {
+      position: relative;
+      background: var(--bg);
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 62vh;
+      min-height: 480px;
+      background: var(--bg);
+      --poster-color: transparent;
+      display: block;
+      filter: saturate(1.04) contrast(1.03);
+    }
+
+    .inline-ar-button {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      min-height: 52px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: 1px solid #30412d;
+      background: var(--accent);
+      color: #111;
+      font-weight: 800;
+      font-size: 16px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+      cursor: pointer;
+    }
+
+    .status-pill {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 2;
+      background: rgba(255,255,255,0.94);
+      color: #222;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.35;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+      pointer-events: none;
     }
 
     .note {
@@ -165,577 +182,125 @@
       font-family: Consolas, monospace;
       font-size: 12px;
     }
-
-    #xr-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: none;
-      z-index: 10;
-      touch-action: none;
-    }
-
-    .xr-overlay {
-      position: fixed;
-      inset: 0;
-      display: none;
-      z-index: 20;
-      pointer-events: none;
-    }
-
-    .xr-overlay.is-visible {
-      display: block;
-    }
-
-    .xr-top {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(20,20,20,0.68);
-      color: #fff;
-      font-size: 13px;
-      line-height: 1.45;
-      backdrop-filter: blur(6px);
-      pointer-events: none;
-    }
-
-    .xr-controls {
-      position: absolute;
-      left: 12px;
-      right: 12px;
-      bottom: 18px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      pointer-events: auto;
-    }
-
-    .xr-btn {
-      appearance: none;
-      border: 0;
-      min-height: 50px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.94);
-      color: #111;
-      font-weight: 800;
-      font-size: 14px;
-      cursor: pointer;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.22);
-    }
-
-    .xr-btn.primary { background: var(--accent); }
-    .xr-btn.warning { background: #fff4d6; }
-    .xr-btn.danger { background: #f1e5e0; color: var(--danger); }
-
-    .xr-btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
-    .xr-mini-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      grid-column: 1 / -1;
-    }
-
-    @media (max-width: 520px) {
-      .xr-controls { grid-template-columns: 1fr; }
-      .xr-mini-row { grid-template-columns: repeat(3, 1fr); }
-    }
   </style>
 </head>
 <body>
-  <canvas id="xr-canvas"></canvas>
-
-  <div class="xr-overlay" id="xr-overlay">
-    <div class="xr-top" id="xr-status">
-      Point your camera at the wall. The frame is not placed until you tap Place on Wall.
-    </div>
-
-    <div class="xr-controls">
-      <button class="xr-btn primary" id="place-btn" type="button" disabled>Place on Wall</button>
-      <button class="xr-btn" id="move-btn" type="button" disabled>Move</button>
-      <button class="xr-btn warning" id="manual-btn" type="button">Manual Place</button>
-      <button class="xr-btn danger" id="exit-btn" type="button">Exit AR</button>
-
-      <div class="xr-mini-row">
-        <button class="xr-btn" id="scale-down-btn" type="button">− Size</button>
-        <button class="xr-btn" id="reset-btn" type="button">Reset</button>
-        <button class="xr-btn" id="scale-up-btn" type="button">+ Size</button>
-      </div>
-    </div>
-  </div>
-
   <div class="page">
     <div class="topbar">
-      <div class="title">Custom Wall AR</div>
-      <div class="subtitle">Place a frame/poster on a vertical wall with manual control.</div>
+      <div class="title">Wall AR Preview</div>
+      <div class="subtitle">Preview the artwork, then place it on a vertical wall.</div>
     </div>
 
     <div class="shell">
-      <div class="card">
+      <div class="viewer-card">
         <div class="hero-copy">
-          <h1>Place the artwork on your wall</h1>
-          <p>
-            This version opens the camera first and waits for you to choose the wall.
-            If the wall is blank, use Manual Place after pointing the phone at the desired spot.
-          </p>
-        </div>
+          <h1>View this artwork on your wall</h1>
+          <p>For best tracking on a white wall, scan around the wall first: corners, outlets, shadows, frames, furniture edges or the floor/wall transition.</p>
 
-        <div class="preview">
-          <div class="preview-inner">
-            <button class="start-btn" id="start-ar-btn" type="button">Start Wall AR</button>
-            <div class="status" id="page-status">
-              Initializing…
-            </div>
-            <pre class="log" id="debug-log">Booting…</pre>
+          <div class="steps">
+            <div><strong>1.</strong> Point the phone at the wall area where the artwork should go.</div>
+            <div><strong>2.</strong> Slowly move the camera around nearby visual references.</div>
+            <div><strong>3.</strong> Tap <strong>View on Wall</strong> only after aiming at the final wall position.</div>
           </div>
         </div>
+
+        <div class="viewer-shell">
+          <div class="status-pill" id="ar-status-pill">Ready. Point at the wall first, then tap View on Wall.</div>
+
+          <model-viewer
+            id="wall-art-viewer"
+            src="./assets/models/quadro.glb"
+            alt="Wall art preview model"
+            ar
+            ar-modes="webxr"
+            ar-placement="wall"
+            ar-scale="fixed"
+            xr-environment
+            camera-controls
+            touch-action="pan-y"
+            shadow-intensity="1"
+            shadow-softness="0.85"
+            exposure="2"
+            environment-image="./assets/hdr/glasshouse_interior_4k_blur_exp_sat.hdr"
+            interaction-prompt="none"
+            camera-orbit="0deg 75deg auto"
+            field-of-view="28deg"
+            loading="eager"
+            reveal="auto"
+          >
+            <button slot="ar-button" class="inline-ar-button" type="button">View on Wall</button>
+
+            <effect-composer id="composer" render-mode="quality">
+              <smaa-effect id="fx-smaa"></smaa-effect>
+              <ssao-effect
+                id="fx-ssao"
+                intensity="0.70"
+                radius="0.20"
+                luminance-influence="0.55"
+                bias="0.025"
+              ></ssao-effect>
+              <bloom-effect
+                id="fx-bloom"
+                strength="0.25"
+                threshold="0.55"
+                radius="0.55"
+              ></bloom-effect>
+              <color-grade-effect
+                id="fx-color"
+                tonemapping="aces_filmic"
+                contrast="0.08"
+                saturation="0.10"
+              ></color-grade-effect>
+            </effect-composer>
+          </model-viewer>
+        </div>
       </div>
 
       <div class="note">
-        <strong>Auto mode:</strong> point at a textured wall until the outline appears, then tap <code>Place on Wall</code>.
+        <strong>Important:</strong> this version uses free <code>&lt;model-viewer&gt;</code> WebXR wall placement only. It avoids Scene Viewer because Scene Viewer can fall back to table/floor placement.
       </div>
 
       <div class="note">
-        <strong>Blank wall mode:</strong> if the wall has no visual reference, tap <code>Manual Place</code>. This places the artwork in front of the camera at a fixed distance and keeps it in world space.
+        <strong>Blank white walls:</strong> AR cannot reliably detect a perfectly blank wall. The best workaround is to scan nearby references first, then place the artwork on the wall area.
       </div>
 
       <div class="note">
-        <strong>Model:</strong> this page expects <code>assets/models/quadro.glb</code> and <code>assets/hdr/glasshouse_interior_4k_blur_exp_sat.hdr</code>.
+        <strong>Model:</strong> this page expects <code>assets/models/quadro.glb</code> and keeps <code>assets/hdr/glasshouse_interior_4k_blur_exp_sat.hdr</code>.
       </div>
     </div>
   </div>
 
   <script>
-    // Minimal fallback so the button never appears completely dead if the module fails.
-    window.addEventListener('error', (event) => {
-      const el = document.getElementById('debug-log');
-      const st = document.getElementById('page-status');
-      if (el) el.textContent += `\n[Global error] ${event.message}`;
-      if (st) st.textContent = 'Script error. See log below.';
+    const viewer = document.getElementById('wall-art-viewer');
+    const statusPill = document.getElementById('ar-status-pill');
+
+    function setStatus(text) {
+      if (statusPill) statusPill.textContent = text;
+    }
+
+    viewer.addEventListener('load', () => {
+      setStatus('Ready. Point at the wall first, then tap View on Wall.');
     });
 
-    window.addEventListener('unhandledrejection', (event) => {
-      const el = document.getElementById('debug-log');
-      const st = document.getElementById('page-status');
-      if (el) el.textContent += `\n[Promise error] ${event.reason?.message || event.reason}`;
-      if (st) st.textContent = 'Promise error. See log below.';
+    viewer.addEventListener('ar-status', (event) => {
+      const status = event.detail?.status;
+
+      if (status === 'session-started') {
+        setStatus('AR started. Move slowly and aim at the wall area.');
+      }
+
+      if (status === 'object-placed') {
+        setStatus('Placed. Drag with one finger if the browser allows repositioning.');
+      }
+
+      if (status === 'not-presenting') {
+        setStatus('Ready. Point at the wall first, then tap View on Wall.');
+      }
+
+      if (status === 'failed') {
+        setStatus('AR failed. Try Android Chrome, HTTPS, and a wall with more visual reference.');
+      }
     });
-  </script>
-
-  <script type="module">
-    import * as THREE from 'https://esm.sh/three@0.174.0';
-    import { GLTFLoader } from 'https://esm.sh/three@0.174.0/examples/jsm/loaders/GLTFLoader.js';
-    import { RGBELoader } from 'https://esm.sh/three@0.174.0/examples/jsm/loaders/RGBELoader.js';
-
-    const MODEL_URL = './assets/models/quadro.glb';
-    const HDR_URL = './assets/hdr/glasshouse_interior_4k_blur_exp_sat.hdr';
-
-    const startBtn = document.getElementById('start-ar-btn');
-    const pageStatus = document.getElementById('page-status');
-    const debugLog = document.getElementById('debug-log');
-    const overlay = document.getElementById('xr-overlay');
-    const xrStatus = document.getElementById('xr-status');
-    const placeBtn = document.getElementById('place-btn');
-    const moveBtn = document.getElementById('move-btn');
-    const manualBtn = document.getElementById('manual-btn');
-    const exitBtn = document.getElementById('exit-btn');
-    const resetBtn = document.getElementById('reset-btn');
-    const scaleDownBtn = document.getElementById('scale-down-btn');
-    const scaleUpBtn = document.getElementById('scale-up-btn');
-    const canvas = document.getElementById('xr-canvas');
-
-    let renderer;
-    let scene;
-    let camera;
-    let frameRoot;
-    let reticle;
-    let session = null;
-    let referenceSpace = null;
-    let referenceSpaceType = null;
-    let viewerSpace = null;
-    let hitTestSource = null;
-    let lastHitMatrix = null;
-    let hasPlaced = false;
-    let modelScale = 1.0;
-    let manualDistance = 1.35;
-
-    boot();
-
-    function log(text) {
-      const line = `[${new Date().toLocaleTimeString()}] ${text}`;
-      console.log(line);
-      if (debugLog) {
-        debugLog.textContent += `\n${line}`;
-        debugLog.scrollTop = debugLog.scrollHeight;
-      }
-    }
-
-    function setPageStatus(text) {
-      if (pageStatus) pageStatus.textContent = text;
-      log(text);
-    }
-
-    function setXRStatus(text) {
-      if (xrStatus) xrStatus.textContent = text;
-      log(text);
-    }
-
-    async function boot() {
-      try {
-        log('Boot start.');
-        setPageStatus(`Secure context: ${window.isSecureContext}`);
-
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 30);
-
-        renderer = new THREE.WebGLRenderer({
-          canvas,
-          alpha: true,
-          antialias: true,
-          powerPreference: 'high-performance',
-        });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        renderer.xr.enabled = true;
-
-        const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.1);
-        scene.add(hemi);
-
-        const dir = new THREE.DirectionalLight(0xffffff, 0.9);
-        dir.position.set(0, 3, 3);
-        scene.add(dir);
-
-        await loadEnvironment();
-        await loadModel();
-        createReticle();
-
-        window.addEventListener('resize', onResize);
-
-        startBtn.addEventListener('click', startAR);
-        placeBtn.addEventListener('click', placeOnCurrentWall);
-        moveBtn.addEventListener('click', moveAgain);
-        manualBtn.addEventListener('click', manualPlace);
-        exitBtn.addEventListener('click', exitAR);
-        resetBtn.addEventListener('click', resetPlacement);
-        scaleDownBtn.addEventListener('click', () => changeScale(0.9));
-        scaleUpBtn.addEventListener('click', () => changeScale(1.1));
-
-        if (!navigator.xr) {
-          setPageStatus('WebXR is not available in this browser. Use Android Chrome over HTTPS.');
-          return;
-        }
-
-        const supported = await navigator.xr.isSessionSupported('immersive-ar').catch((error) => {
-          log(`isSessionSupported failed: ${error?.message || error}`);
-          return false;
-        });
-
-        setPageStatus(`WebXR immersive-ar supported: ${supported}`);
-
-        if (!supported) {
-          setPageStatus('Immersive AR is not supported on this device/browser.');
-        }
-
-        log('Boot finished.');
-      } catch (error) {
-        console.error(error);
-        setPageStatus(`Boot failed: ${error?.message || error}`);
-      }
-    }
-
-    async function loadEnvironment() {
-      try {
-        log(`Loading HDR: ${HDR_URL}`);
-        const pmrem = new THREE.PMREMGenerator(renderer);
-        const hdr = await new RGBELoader().loadAsync(HDR_URL);
-        const env = pmrem.fromEquirectangular(hdr).texture;
-        scene.environment = env;
-        hdr.dispose();
-        pmrem.dispose();
-        log('HDR loaded.');
-      } catch (error) {
-        log(`HDR failed: ${error?.message || error}`);
-      }
-    }
-
-    async function loadModel() {
-      log(`Loading model: ${MODEL_URL}`);
-      const gltf = await new GLTFLoader().loadAsync(MODEL_URL);
-      frameRoot = gltf.scene;
-      frameRoot.visible = false;
-      frameRoot.scale.setScalar(modelScale);
-
-      frameRoot.traverse((obj) => {
-        if (!obj.isMesh || !obj.material) return;
-        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-        for (const mat of mats) {
-          if ('envMapIntensity' in mat) {
-            mat.envMapIntensity = 1.0;
-            mat.needsUpdate = true;
-          }
-        }
-      });
-
-      scene.add(frameRoot);
-      log('Model loaded.');
-    }
-
-    function createReticle() {
-      const width = 0.65;
-      const height = 0.9;
-      const points = [
-        new THREE.Vector3(-width / 2, -height / 2, 0),
-        new THREE.Vector3(width / 2, -height / 2, 0),
-        new THREE.Vector3(width / 2, height / 2, 0),
-        new THREE.Vector3(-width / 2, height / 2, 0),
-        new THREE.Vector3(-width / 2, -height / 2, 0),
-      ];
-
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const material = new THREE.LineBasicMaterial({ color: 0xdce6a0 });
-
-      reticle = new THREE.Line(geometry, material);
-      reticle.matrixAutoUpdate = false;
-      reticle.visible = false;
-      scene.add(reticle);
-      log('Reticle created.');
-    }
-
-    async function startAR() {
-      log('Start Wall AR click.');
-
-      if (!navigator.xr) {
-        setPageStatus('WebXR is not available. Use Android Chrome over HTTPS.');
-        return;
-      }
-
-      let grantedSession = null;
-
-      try {
-        setPageStatus('Requesting immersive-ar session…');
-
-        const sessionInit = {
-          requiredFeatures: ['hit-test'],
-          optionalFeatures: ['dom-overlay', 'light-estimation', 'local-floor', 'unbounded'],
-          domOverlay: { root: overlay },
-        };
-
-        grantedSession = await navigator.xr.requestSession('immersive-ar', sessionInit);
-        session = grantedSession;
-        log('AR session granted.');
-
-        session.addEventListener('end', onSessionEnded);
-
-        referenceSpace = await requestBestReferenceSpace(session);
-        viewerSpace = await session.requestReferenceSpace('viewer');
-        hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
-
-        await renderer.xr.setSession(session);
-
-        canvas.style.display = 'block';
-        overlay.classList.add('is-visible');
-
-        hasPlaced = false;
-        frameRoot.visible = false;
-        reticle.visible = false;
-        placeBtn.disabled = true;
-        moveBtn.disabled = true;
-
-        setXRStatus(`AR started with ${referenceSpaceType} reference space. Point your camera at the wall, then tap Place on Wall.`);
-        renderer.setAnimationLoop(render);
-      } catch (error) {
-        console.error('AR start failed:', error);
-        setPageStatus(`AR failed to start: ${error?.message || error}`);
-
-        // If the browser granted a session but failed before Three.js attached it,
-        // end it safely to avoid the XRManager cancelAnimationFrame null bug.
-        if (grantedSession) {
-          try {
-            grantedSession.removeEventListener('end', onSessionEnded);
-            await grantedSession.end();
-          } catch (endError) {
-            log(`Session cleanup failed: ${endError?.message || endError}`);
-          }
-        }
-
-        session = null;
-        referenceSpace = null;
-        referenceSpaceType = null;
-        viewerSpace = null;
-        hitTestSource = null;
-      }
-    }
-
-    async function requestBestReferenceSpace(xrSession) {
-      const candidates = ['local', 'local-floor', 'unbounded'];
-
-      for (const type of candidates) {
-        try {
-          log(`Trying reference space: ${type}`);
-          const space = await xrSession.requestReferenceSpace(type);
-          referenceSpaceType = type;
-          log(`Reference space accepted: ${type}`);
-          return space;
-        } catch (error) {
-          log(`Reference space failed (${type}): ${error?.message || error}`);
-        }
-      }
-
-      throw new Error('No supported world reference space found. This device/browser supports immersive-ar, but not the reference spaces required for stable placement.');
-    }
-
-    function render(timestamp, frame) {
-      if (!frame || !referenceSpace || !hitTestSource) {
-        renderer.render(scene, camera);
-        return;
-      }
-
-      const results = frame.getHitTestResults(hitTestSource);
-
-      if (!hasPlaced && results.length > 0) {
-        const hit = results[0];
-        const pose = hit.getPose(referenceSpace);
-
-        if (pose) {
-          lastHitMatrix = pose.transform.matrix;
-          reticle.visible = true;
-          reticle.matrix.fromArray(lastHitMatrix);
-          placeBtn.disabled = false;
-          if (Math.floor(timestamp / 1000) % 2 === 0) {
-            xrStatus.textContent = 'Wall/surface found. Aim at the desired wall, then tap Place on Wall.';
-          }
-        }
-      } else if (!hasPlaced) {
-        reticle.visible = false;
-        placeBtn.disabled = true;
-        xrStatus.textContent = 'Searching for a wall. For a blank white wall, use Manual Place while pointing at the desired spot.';
-      }
-
-      renderer.render(scene, camera);
-    }
-
-    function placeOnCurrentWall() {
-      log('Place on Wall click.');
-      if (!lastHitMatrix || !frameRoot) return;
-
-      frameRoot.matrixAutoUpdate = false;
-      frameRoot.matrix.fromArray(lastHitMatrix);
-      frameRoot.scale.setScalar(modelScale);
-      frameRoot.visible = true;
-
-      hasPlaced = true;
-      reticle.visible = false;
-      placeBtn.disabled = true;
-      moveBtn.disabled = false;
-
-      setXRStatus('Placed. Tap Move to choose another wall, or use Size controls.');
-    }
-
-    function manualPlace() {
-      log('Manual Place click.');
-      if (!frameRoot) return;
-
-      const xrCamera = renderer.xr.getCamera(camera);
-      const camPos = new THREE.Vector3();
-      const camQuat = new THREE.Quaternion();
-      const camScale = new THREE.Vector3();
-
-      xrCamera.matrixWorld.decompose(camPos, camQuat, camScale);
-
-      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camQuat).normalize();
-      const targetPos = camPos.clone().add(forward.multiplyScalar(manualDistance));
-
-      frameRoot.matrixAutoUpdate = true;
-      frameRoot.position.copy(targetPos);
-
-      frameRoot.lookAt(camPos);
-      frameRoot.rotateY(Math.PI);
-
-      frameRoot.scale.setScalar(modelScale);
-      frameRoot.visible = true;
-
-      hasPlaced = true;
-      reticle.visible = false;
-      placeBtn.disabled = true;
-      moveBtn.disabled = false;
-
-      setXRStatus('Manual placement used. This is best for blank white walls. Tap Move to reposition.');
-    }
-
-    function moveAgain() {
-      log('Move click.');
-      hasPlaced = false;
-      frameRoot.visible = false;
-      frameRoot.matrixAutoUpdate = true;
-      placeBtn.disabled = true;
-      moveBtn.disabled = true;
-      setXRStatus('Move mode. Aim at the wall again, then tap Place on Wall or Manual Place.');
-    }
-
-    function resetPlacement() {
-      log('Reset click.');
-      hasPlaced = false;
-      modelScale = 1.0;
-      if (frameRoot) {
-        frameRoot.visible = false;
-        frameRoot.matrixAutoUpdate = true;
-        frameRoot.scale.setScalar(modelScale);
-      }
-      if (reticle) reticle.visible = false;
-      placeBtn.disabled = true;
-      moveBtn.disabled = true;
-      setXRStatus('Reset. Aim at the wall, then tap Place on Wall or Manual Place.');
-    }
-
-    function changeScale(multiplier) {
-      modelScale = THREE.MathUtils.clamp(modelScale * multiplier, 0.35, 2.5);
-      if (frameRoot) frameRoot.scale.setScalar(modelScale);
-      setXRStatus(`Size adjusted: ${modelScale.toFixed(2)}x`);
-    }
-
-    async function exitAR() {
-      log('Exit AR click.');
-      if (session) await session.end();
-    }
-
-    function onSessionEnded() {
-      log('AR session ended.');
-
-      try {
-        if (renderer) renderer.setAnimationLoop(null);
-      } catch (error) {
-        log(`Animation cleanup ignored: ${error?.message || error}`);
-      }
-
-      session = null;
-      hitTestSource = null;
-      referenceSpace = null;
-      referenceSpaceType = null;
-      viewerSpace = null;
-      lastHitMatrix = null;
-
-      canvas.style.display = 'none';
-      overlay.classList.remove('is-visible');
-
-      if (frameRoot) frameRoot.visible = false;
-      if (reticle) reticle.visible = false;
-
-      setPageStatus('AR ended. You can start again.');
-    }
-
-    function onResize() {
-      if (!renderer || !camera) return;
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
   </script>
 </body>
 </html>

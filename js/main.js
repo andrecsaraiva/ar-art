@@ -1,4 +1,4 @@
-console.log('MAIN JS CARREGADO - WALL ART AR V5 REFERENCE SPACE FALLBACK');
+console.log('MAIN JS CARREGADO - WALL ART AR V6 CLEAN MODEL-VIEWER WALL');
 
 const MODEL_FILE_PATH = './assets/models/quadro.glb';
 const USE_LOCAL_HDR = true;
@@ -164,6 +164,11 @@ document.addEventListener('DOMContentLoaded', () => {
           class="hero-model-viewer"
           src="${MODEL_FILE_PATH}"
           alt="3D wall art preview"
+          ar
+          ar-modes="webxr"
+          ar-placement="wall"
+          ar-scale="fixed"
+          xr-environment
           camera-controls
           touch-action="pan-y"
           shadow-intensity="1"
@@ -176,6 +181,14 @@ document.addEventListener('DOMContentLoaded', () => {
           reveal="auto"
           loading="eager"
         >
+          <button
+            slot="ar-button"
+            class="inline-ar-button"
+            type="button"
+            aria-label="Open wall AR"
+          >
+            View on Wall
+          </button>
           ${buildEffectsMarkup()}
         </model-viewer>
         <div class="viewer-vignette"></div>
@@ -216,6 +229,19 @@ document.addEventListener('DOMContentLoaded', () => {
     viewer.addEventListener('load', () => {
       console.log('Model loaded successfully:', MODEL_FILE_PATH);
       safeRemoveLoading();
+    });
+
+    viewer.addEventListener('ar-status', (event) => {
+      const status = event.detail?.status;
+      if (status === 'session-started') {
+        console.log('Wall AR session started.');
+      }
+      if (status === 'not-presenting') {
+        console.log('Wall AR session ended.');
+      }
+      if (status === 'failed') {
+        console.warn('Wall AR failed to start.');
+      }
     });
 
     viewer.addEventListener('error', (event) => {
@@ -275,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (eyebrow) eyebrow.textContent = 'Wall AR';
     if (title) title.textContent = 'Scan to view this piece on your wall';
     if (copy) {
-      copy.textContent = 'Use this QR code to open the custom wall AR experience on your phone. The model is not placed automatically: point to the wall first, then tap Place on Wall.';
+      copy.textContent = 'Use this QR code to open the wall AR experience on your phone. Before tapping View on Wall, point the camera at the wall and slowly scan nearby edges, corners, furniture, outlets, or shadows to help tracking.';
     }
 
     if (openArLink) {
