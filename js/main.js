@@ -1,4 +1,4 @@
-console.log('MAIN JS CARREGADO - WALL ART AR V4 CUSTOM WEBXR DEBUG');
+console.log('MAIN JS CARREGADO - WALL ART AR V5 REFERENCE SPACE FALLBACK');
 
 const MODEL_FILE_PATH = './assets/models/quadro.glb';
 const USE_LOCAL_HDR = true;

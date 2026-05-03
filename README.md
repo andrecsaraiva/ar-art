@@ -39,3 +39,18 @@ This version changes the AR page imports from unpkg example modules to esm.sh mo
 Why:
 - if the module import failed, the Start Wall AR button would look broken because the click handler was never attached.
 - this page now prints boot, model loading, HDR loading, WebXR support, and AR start errors directly on the page.
+
+
+## V5 reference-space fallback
+
+The V4 log showed:
+
+`This device does not support the requested reference space type.`
+
+V5 now tries these reference spaces in order:
+
+1. `local`
+2. `local-floor`
+3. `unbounded`
+
+It also safely cleans up the AR session if the session is granted but fails before Three.js attaches to it.

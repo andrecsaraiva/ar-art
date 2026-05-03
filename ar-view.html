@@ -358,6 +358,7 @@
     let reticle;
     let session = null;
     let referenceSpace = null;
+    let referenceSpaceType = null;
     let viewerSpace = null;
     let hitTestSource = null;
     let lastHitMatrix = null;
@@ -515,21 +516,24 @@
         return;
       }
 
+      let grantedSession = null;
+
       try {
         setPageStatus('Requesting immersive-ar session…');
 
         const sessionInit = {
           requiredFeatures: ['hit-test'],
-          optionalFeatures: ['dom-overlay', 'light-estimation'],
+          optionalFeatures: ['dom-overlay', 'light-estimation', 'local-floor', 'unbounded'],
           domOverlay: { root: overlay },
         };
 
-        session = await navigator.xr.requestSession('immersive-ar', sessionInit);
+        grantedSession = await navigator.xr.requestSession('immersive-ar', sessionInit);
+        session = grantedSession;
         log('AR session granted.');
 
         session.addEventListener('end', onSessionEnded);
 
-        referenceSpace = await session.requestReferenceSpace('local');
+        referenceSpace = await requestBestReferenceSpace(session);
         viewerSpace = await session.requestReferenceSpace('viewer');
         hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
 
@@ -544,12 +548,47 @@
         placeBtn.disabled = true;
         moveBtn.disabled = true;
 
-        setXRStatus('Point your camera at the wall. The frame is not placed until you tap Place on Wall.');
+        setXRStatus(`AR started with ${referenceSpaceType} reference space. Point your camera at the wall, then tap Place on Wall.`);
         renderer.setAnimationLoop(render);
       } catch (error) {
         console.error('AR start failed:', error);
         setPageStatus(`AR failed to start: ${error?.message || error}`);
+
+        // If the browser granted a session but failed before Three.js attached it,
+        // end it safely to avoid the XRManager cancelAnimationFrame null bug.
+        if (grantedSession) {
+          try {
+            grantedSession.removeEventListener('end', onSessionEnded);
+            await grantedSession.end();
+          } catch (endError) {
+            log(`Session cleanup failed: ${endError?.message || endError}`);
+          }
+        }
+
+        session = null;
+        referenceSpace = null;
+        referenceSpaceType = null;
+        viewerSpace = null;
+        hitTestSource = null;
       }
+    }
+
+    async function requestBestReferenceSpace(xrSession) {
+      const candidates = ['local', 'local-floor', 'unbounded'];
+
+      for (const type of candidates) {
+        try {
+          log(`Trying reference space: ${type}`);
+          const space = await xrSession.requestReferenceSpace(type);
+          referenceSpaceType = type;
+          log(`Reference space accepted: ${type}`);
+          return space;
+        } catch (error) {
+          log(`Reference space failed (${type}): ${error?.message || error}`);
+        }
+      }
+
+      throw new Error('No supported world reference space found. This device/browser supports immersive-ar, but not the reference spaces required for stable placement.');
     }
 
     function render(timestamp, frame) {
@@ -668,10 +707,17 @@
 
     function onSessionEnded() {
       log('AR session ended.');
-      renderer.setAnimationLoop(null);
+
+      try {
+        if (renderer) renderer.setAnimationLoop(null);
+      } catch (error) {
+        log(`Animation cleanup ignored: ${error?.message || error}`);
+      }
+
       session = null;
       hitTestSource = null;
       referenceSpace = null;
+      referenceSpaceType = null;
       viewerSpace = null;
       lastHitMatrix = null;
 
