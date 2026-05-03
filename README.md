@@ -30,3 +30,12 @@ GLB prep:
 - Front of the artwork should face +Z.
 - Back should face -Z.
 - Apply transforms before export.
+
+
+## V4 debug fix
+
+This version changes the AR page imports from unpkg example modules to esm.sh modules and adds a visible debug log.
+
+Why:
+- if the module import failed, the Start Wall AR button would look broken because the click handler was never attached.
+- this page now prints boot, model loading, HDR loading, WebXR support, and AR start errors directly on the page.
