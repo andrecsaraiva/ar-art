@@ -1,4 +1,4 @@
-console.log('MAIN JS CARREGADO - WALL ART AR V2 WEBXR WALL ONLY');
+console.log('MAIN JS CARREGADO - WALL ART AR V3 CUSTOM WEBXR');
 
 const MODEL_FILE_PATH = './assets/models/quadro.glb';
 const USE_LOCAL_HDR = true;
@@ -164,11 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
           class="hero-model-viewer"
           src="${MODEL_FILE_PATH}"
           alt="3D wall art preview"
-          ar
-          ar-modes="webxr"
-          ar-placement="wall"
-          ar-scale="fixed"
-          xr-environment
           camera-controls
           touch-action="pan-y"
           shadow-intensity="1"
@@ -181,14 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
           reveal="auto"
           loading="eager"
         >
-          <button
-            slot="ar-button"
-            class="inline-ar-button"
-            type="button"
-            aria-label="Open wall AR"
-          >
-            View on Wall
-          </button>
           ${buildEffectsMarkup()}
         </model-viewer>
         <div class="viewer-vignette"></div>
@@ -288,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (eyebrow) eyebrow.textContent = 'Wall AR';
     if (title) title.textContent = 'Scan to view this piece on your wall';
     if (copy) {
-      copy.textContent = 'Use this QR code to open the wall-only WebXR experience on your phone. Point the camera at a vertical wall and use the AR button. This version intentionally avoids Scene Viewer because Scene Viewer may place the object on tables or floors.';
+      copy.textContent = 'Use this QR code to open the custom wall AR experience on your phone. The model is not placed automatically: point to the wall first, then tap Place on Wall.';
     }
 
     if (openArLink) {

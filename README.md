@@ -1,55 +1,32 @@
-# Wall Art AR V1
+# Wall Art AR V3 - Custom WebXR
 
 Modified files:
 - index.html
 - ar-view.html
 - js/main.js
-- css/styles.css
 
 Expected asset structure:
 - assets/models/quadro.glb
 - assets/hdr/glasshouse_interior_4k_blur_exp_sat.hdr
 
-What this version does:
-- keeps the existing product-page / GLB viewer structure
-- changes the model path to `./assets/models/quadro.glb`
-- keeps the same HDR path
-- adds AR buttons for wall placement
-- uses `<model-viewer>` with:
-  - `ar`
-  - `ar-modes="webxr scene-viewer"`
-  - `ar-placement="wall"`
-  - `ar-scale="fixed"`
-  - `xr-environment`
-
-GLB preparation notes:
-- The GLB should be real-world scale.
-- Use meters as unit scale.
-- The object should be centered around its origin.
-- For wall placement, the back side of the model should face the negative Z direction.
-- The front/artwork side should face positive Z.
-- Put the pivot/origin at the center of the artwork/frame.
-- Keep the back surface flat and close to Z=0 when possible.
-- Apply transforms before export: Ctrl+A > All Transforms.
-- Export as GLB named `quadro.glb`.
-
-
-## V2 change
-
-This version forces wall AR to use WebXR only:
-
-```html
-ar-modes="webxr"
-ar-placement="wall"
-```
+What changed from V2:
+- AR camera is now custom Three.js + WebXR instead of model-viewer AR.
+- The artwork is NOT created automatically.
+- The user must tap Place on Wall when WebXR finds a wall/surface.
+- Added Manual Place for blank white walls.
+- Added Move, Reset, Size controls and Exit AR.
 
 Why:
-- Scene Viewer may fall back to horizontal surface placement.
-- If the object appears on a table/floor, the experience is probably not using WebXR wall placement.
-- WebXR-only is stricter: if wall placement is unsupported on the device/browser, AR may not start, but it avoids the wrong table/floor placement.
+- model-viewer AR may place the object on the first detected surface.
+- Custom WebXR gives us control over when the model is placed.
+- Blank white walls often have no feature points, so hit testing can fail.
+- Manual Place creates a usable fallback for plain walls.
 
-Testing tips:
-- Use Android Chrome.
-- Use HTTPS.
-- Test on a wall with texture/contrast, not a blank glossy wall.
-- Move the phone slowly to let WebXR detect the vertical plane.
+GLB prep:
+- File name: quadro.glb
+- Folder: assets/models/quadro.glb
+- Use real scale in meters.
+- Pivot/origin at center of the frame/poster.
+- Front of the artwork should face +Z.
+- Back should face -Z.
+- Apply transforms before export.
